@@ -1,32 +1,64 @@
-function TodoController() {
+function TodoController(TodoService) {
+  const ctrl = this;
   this.newTodo = "";
-  this.list = [{
-    title: 'First todo item!',
-    completed: true
-  },
-  {
-    title: 'Second todo item!',
-    completed: false
-  },
-  {
-    title: 'Third  todo item!',
-    completed: false
-  }
-  ];
+  this.list = [];
+
+  function getTodos(){
+    TodoService
+      .retrieve()
+      .then(
+        (response) => ctrl.list = response,
+        (error   ) => console.log(error)
+      )
+  };
+
   this.addTodo = function(){
-    this.list.unshift({
-      title: this.newTodo,
-      completed: false
-    });
+    if(!ctrl.newTodo) {
+      return;
+    }
+    TodoService
+      .create({
+        title: this.newTodo,
+        completed: false
+      })
+      .then(
+        (response) => {
+          ctrl.list.unshift(response);
+          ctrl.newTodo = "";
+        }
+      )
   };
 
   this.removeTodo = function(item,index) {
-    this.list.splice(index,1);
+    TodoService
+      .remove(item)
+      .then(
+        (response) => ctrl.list.splice(index , 1)
+      )
   };
+
+  this.updateTodo = function(item , index) {
+    if(!item.title) {
+      ctrl.removeTodo(item, index);
+      return;
+    }
+    TodoService
+      .update(item)
+  }
 
   this.getRemaining = () => {
     return this.list.filter( (item)=> !item.completed )
   }
+
+  this.toggleState = (item) => {
+    TodoService
+      .update(item)
+      .then(
+        (response) => {},
+        (err) => item.completed = !item.completed
+      )
+  }
+  getTodos();
 }
 
 angular
